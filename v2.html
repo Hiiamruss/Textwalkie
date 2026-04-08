@@ -1,33 +1,181 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script> 
+<style>
+    /* ====================
+   Basic page style
+   ==================== */
+body {
+    font-family: Arial, sans-serif;  /* easy font */
+    background: #f0f0f0;             /* light gray background */
+    text-align: center;     /* center everything */
+    padding: 20px;
+}
+
+/* ====================
+   Boxes / sections
+   ==================== */
+section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;  /* round corners */
+    margin-bottom: 20px;
+    margin:auto;          
+    width: 350px;
+}
+
+/* ====================
+   Inputs
+   ==================== */
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;  /* simple border */
+    border-radius: 12px;
+}
+
+/* ====================
+   Buttons
+   ==================== */
+button {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background-color:grey;
+    color: white;
+}
+
+#jcb { background: darkslategrey; }
+#dcb { background: red; }
+#smb { background: blue; }
+
+/* ====================
+   Messages
+   ==================== */
+#messages {
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+#messages div {
+    background: #cce7ff;   /* simple light blue bubble */
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+</style>
 <html>
     <head>
-        <title>Just a few more hours!</title>
+        <title>NeoChat</title>
     </head>
     <body>
-        <center>
+        <section>
             <h1>NeoChat</h1>
-            <b>Textwalkie 2.0</b>
-        </center>
+            <input type="number" placeholder="Enter Room Code" id="roomcode">
+            <button id="jcb" enabled onclick="Connect()">Join Chat</button>
+            <button id="dcb" disabled onclick="Disconnect()">Disconnect</button>
+            <h3>Or...</h3>
+            <button onclick="CreateRoom()">Create A Room</button>
+            <b id="code">Code Not Generated</b>
+        </section>
         
 
-        <h3>Features:</h3>
-        <p>NeoChat is the all new brought in, freshly cooked newer version of textwalkie.</p>
-        <p>NeoChat offers...</p>
-        <pre>
-<b>- new clean UI</b>
-<b>-Private Rooms</b>
-<b>-Ability to create your own rooms.</b>
-<b>-Private chats</b>
-<b>-Accessible UI</b>
-        </pre>
-        <h3 style="color:orange;">Warning: This version of textwalkie will be discontinued on April 24, 2026. Github Version remains open source.</h3>
+        <input type="text" placeholder="Enter Name" id="name">
+        <input type="text" placeholder="Enter Message" id="message">
+        <button id="smb" disabled onclick="SendBell()">Send Message</button>
+        <section id="messages">
 
-        <center>
-            <h1>Beta Test in April 9, 2026 at 00:00</h1>
-            <h1>Full Release At April 26, 2026 at 00:00</h1>
-            <a href="index.html"><button>Back to Textwalkie for now.</button></a>
-        </center>
-
-
+        </section>
     </body>
 </html>
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBguqCU6NI9Q3NRMJiA4W4LErU6qt2A9gk",
+        authDomain: "bell-27dbe.firebaseapp.com",
+        databaseURL: "https://bell-27dbe-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "bell-27dbe",
+        storageBucket: "bell-27dbe.firebasestorage.app",
+        messagingSenderId: "519724590988",
+        appId: "1:519724590988:web:109ed77d93560e1b7d18a9"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database(); 
+
+    let roomRef = null;
+
+    function CreateRoom() {
+        const min = 100_000_000;  // 100 million
+        const max = 999_999_999;  // 999,999,999
+        code = Math.floor(Math.random() * (max - min + 1)) + min;
+
+        document.getElementById("code").innerText = code
+    }
+
+    function Connect() {
+        const roomcode = document.getElementById("roomcode").value;
+        if (roomcode < 100000000) {
+            alert("Invalid room code. Room code must be at least 9 digits.")
+            return;
+        }
+        roomRef = db.ref("/Servers/Asia/" + roomcode)
+
+        alert("Successfully Joined Room " + roomcode + "!");
+
+        
+        roomRef.on("child_added", snap => {
+            const bell = snap.val()
+            const name = bell.name
+            const message = bell.message
+            
+            const n = document.createElement("h3");
+            const m = document.createElement("p");
+            const div = document.createElement("div");
+
+            n.innerText = name
+            m.innerText = message
+            
+            div.appendChild(n);
+            div.appendChild(m);
+            document.getElementById("messages").prepend(div);
+        });
+        
+        document.getElementById("smb").disabled = false
+        document.getElementById("jcb").disabled = true
+        document.getElementById("dcb").disabled = false
+    }
+
+    function Disconnect() {
+        const c = confirm("Are you sure you want to disconnect from this chat? You can reconnect at anytime.")
+        if (!c) {
+            alert("Operation Cancelled.")
+            return;
+        }
+        location.reload()
+        document.getElementById("dcb").disabled = true;
+        document.getElementById("smb").disabled = true;
+        document.getElementById("jcb").disabled = false
+    }
+
+    function SendBell() {
+        const name = document.getElementById("name").value;
+        const message = document.getElementById("message").value;
+
+        if (name.trim() === "" || message.trim() === "") {
+            alert("Please fill in all fields.")
+        }
+
+        const post = {name: name, message: message}
+    
+        document.getElementById("message").value = ""
+
+        roomRef.push(post)
+        alert("Successfully sent message.")
+    }
+
+    
+</script>
