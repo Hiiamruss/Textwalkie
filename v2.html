@@ -131,6 +131,7 @@ button {
             const bell = snap.val()
             const name = bell.name
             const message = bell.message
+
             
             const n = document.createElement("h3");
             const m = document.createElement("p");
@@ -138,6 +139,13 @@ button {
 
             n.innerText = name
             m.innerText = message
+
+            if (name === "System" || name === "Admin" || name === "admin" || name === "system" || name === "sudo" || name === "Sudo") {
+                n.innerText=""
+                m.style.color="red"
+            }
+
+         
             
             div.appendChild(n);
             div.appendChild(m);
@@ -165,8 +173,20 @@ button {
         const name = document.getElementById("name").value;
         const message = document.getElementById("message").value;
 
-        if (name.trim() === "" || message.trim() === "") {
-            alert("Please fill in all fields.")
+
+        if (name === "System" || name === "Admin" || name === "admin" || name === "system" || name === "sudo" || name === "Sudo") {
+            let p = prompt("Please enter admin password.") 
+            if (p === "123neochatadmin123") {
+                alert("Successfully logged in as admin.")
+            } else {
+                alert("Unauthorized User.")
+                return;
+            }
+        }
+
+        if (name.trim() === "") {
+            alert("Please enter sender name.")
+            return;
         }
 
         const post = {name: name, message: message}
